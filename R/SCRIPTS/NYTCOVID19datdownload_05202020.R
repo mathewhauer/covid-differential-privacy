@@ -5,9 +5,8 @@
 # dat <- read_csv("https://raw.githubusercontent.com/nytimes/covid-19-data/master/us-counties.csv")
 # write_csv(dat, "./R/DATA-RAW/COVID19-05202020.csv")
 dat <- read_csv("./R/DATA-RAW/COVID19-05202020.csv") %>%
-  group_by(county, state, fips) %>%
-  dplyr::summarize(cases = sum(cases),
-                 deaths = sum(deaths))
+  filter(date == "2020-05-20")
+
 
 
 # Total pop is variable H7Z001
