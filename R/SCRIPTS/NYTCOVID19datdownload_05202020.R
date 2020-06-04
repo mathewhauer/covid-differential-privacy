@@ -12,13 +12,76 @@ dat <- read_csv("./R/DATA-RAW/COVID19-05202020.csv") %>%
 # Total pop is variable H7Z001
 dpdat <- read.xlsx("./R/DATA-PROCESSED/Summary_File.xlsx", sheet = 1)
 dpdat2 <- dpdat %>%
-  mutate(fips = paste0(STFIPS, CTYFIPS)) %>%
-  dplyr::select(fips, name_dp, H7Z001_dp, H7Z001_sf)
+  mutate(fips = paste0(STFIPS, CTYFIPS),
+  # dplyr::select(fips, name_dp, 
+  #               H76022_dp, H76022_sf,
+  #               H76023_dp, H76023_sf,
+  #               H76024_dp, H76024_sf,
+  #               H76025_dp, H76025_sf,
+  #               H76046_dp, H76046_sf,
+  #               H76047_dp, H76047_sf,
+  #               H76048_dp, H76048_sf,
+  #               H76049_dp, H76049_sf,
+  #               ) %>%
+  over70m_dp = H76022_dp +H76023_dp +H76024_dp +H76025_dp,
+  over70f_dp = H76046_dp + H76047_dp +H76048_dp +H76049_dp,
+  over70m_sf = H76022_sf +H76023_sf +H76024_sf +H76025_sf,
+  over70f_sf =  H76046_sf + H76047_sf +H76048_sf +H76049_sf,
+  perdiff_m = over70m_sf / over70m_dp,
+  fatalitiesm_dp = (over70m_sf * 0.6 * 0.12) / over70m_dp ,
+  fatalitiesm_sf = (over70m_sf * 0.6 * 0.12) / over70m_sf,
+  ratrate = fatalitiesm_dp / fatalitiesm_sf) %>%
+  dplyr::select(fips, name_dp, over70m_dp, over70m_sf,over70f_dp, over70f_sf,
+                perdiff_m, fatalitiesm_dp,fatalitiesm_sf, ratrate)
 
-combined <- left_join(dpdat2, dat) %>%
-  mutate(caserat_dp = cases / H7Z001_dp,
-         caserat_sf = cases / H7Z001_sf,
-         fatrat_dp = deaths / H7Z001_dp,
-         fatrat_sf = deaths / H7Z001_sf)
+dpdat2 <- dpdat %>%
+  mutate(fips = paste0(STFIPS, CTYFIPS),
+         oth_dp = (H7Z006_dp + H7Z007_dp +H7Z008_dp +H7Z009_dp),
+         oth_sf = (H7Z006_sf + H7Z007_sf +H7Z008_sf +H7Z009_sf)) %>%
+  dplyr::select(fips, STFIPS, name_dp, 
+                white_dp = H7Z003_dp, white_sf = H7Z003_sf,
+                black_dp = H7Z004_dp, black_sf = H7Z004_sf, 
+                hsp_dp = H7Z010_dp, hsp_sf = H7Z010_sf,
+                oth_dp, oth_sf, 
+                asian_dp = H7Z006_dp, asian_sf = H7Z006_sf,
+                nathawai_dp = H7Z007_dp,nathawai_sf = H7Z007_sf,
+                someother_dp = H7Z008_dp, someother_sf = H7Z008_sf,
+                multi_dp = H7Z009_dp, multi_sf = H7Z009_sf) %>%
+  # group_by(fips, name_dp) %>%
+  pivot_longer(cols = white_dp:multi_sf, names_to = "race", values_to ="pop") %>%
+  separate(race, into= c("race", "type"), sep = "_") %>%
+  pivot_wider(names_from = type, values_from = "pop") %>%
+  mutate(cov_sf = (sf * 0.7*0.01) / sf,
+         cov_dp = ((sf * 0.7*0.01) / dp),
+         ratio = (cov_dp / cov_sf)) %>%
+  na.omit %>%
+  filter(ratio <=2.5)
 
-plot(combined$caserat_dp, combined$caserat_sf)
+# 
+# combined <- left_join(dpdat2, dat) %>%
+#   mutate(caserat_dp = cases / H7Z001_dp,
+#          caserat_sf = cases / H7Z001_sf,
+#          fatrat_dp = deaths / H7Z001_dp,
+#          fatrat_sf = deaths / H7Z001_sf)
+
+plot(log(dpdat2$ratio), log(dpdat2$sf))
+plot(log(dpdat2$sf), log(dpdat2$ratio))
+
+ggplot(data = dpdat2, aes(cov_dp, cov_sf)) +
+  geom_point() +
+  geom_smooth() +
+  theme_bw() +
+  facet_wrap(~ race) +
+  labs(x = "Log(SF Population)",
+       y = "Log(COVID-DP / COVID-SF)")
+
+ggplot(data = dpdat2, aes(log(sf), ratio)) +
+  geom_point() +
+  geom_smooth() +
+  theme_bw() +
+  facet_wrap(~ race) +
+  labs(x = "Log(SF Population)",
+       y = "Ratio(COVID-DP / COVID-SF)",
+       title = "Impact of Differential Privacy on County-level COVID-19 mortality rates by race/eth",
+       caption = "Y-axis shows the ratio of using DP or SF in the denominator for a hypothetical 70% infection and 1% mortality rate. 
+       Values below 1.0 suggest a DP-calculated mortality rate less than SF")

@@ -1,4 +1,6 @@
 
+source("./R/SCRIPTS/000-Libraries.R")
+
 # Getting the differential privacy data into R
 dpdat <- read.xlsx("./R/DATA-PROCESSED/Summary_File.xlsx", sheet = 1)
 
@@ -101,30 +103,20 @@ dpdat3 <- rbind(dpdat2, dpdatatot) %>%
  deaths_dp = dp * fatrate,
  mortrat_dp = deaths_sf / dp, # These two calcs use the deaths from SF only since SF is the true population we would expect to die rather than the noise infused population.
  mortrat_sf = deaths_sf / sf,
- ratio_rates = 1-(mortrat_dp / mortrat_sf), # The ratio of DP fatality rates to SF fatality rates
- ratio_deaths = 1-(deaths_dp / deaths_sf),
+ ratio_rates = (mortrat_dp / mortrat_sf)-1, # The ratio of DP fatality rates to SF fatality rates
+ ratio_deaths = (deaths_dp / deaths_sf)-1,
  sf2 = log(sf)
   )  
 # omitting all NaN and Inf values
 dpdat3[mapply(is.infinite, dpdat3)] <- NA 
 dpdat3 <- na.omit(dpdat3)
 
-# deaths <- dpdat3 %>%
-#   group_by(fips, STFIPS, name_dp) %>%
-#   dplyr::summarise(dp = sum(dp),
-#                    sf = sum(sf),
-#                    deaths_dp = sum(deaths_dp),
-#                    deaths_sf = sum(deaths_sf)) %>%
-#   mutate( mortrat_dp = deaths_sf / dp,
-#           mortrat_sf = deaths_sf / sf,
-#           ratio_rates = (mortrat_dp / mortrat_sf)-1,
-#           ratio_deaths = (deaths_dp / deaths_sf)-1,
-# GEOID = fips)
-# 
-classes <- classIntervals(dpdat3$ratio_deaths, n = 5, style = "jenks")
-classes$brks
-classes2 <- c("-0.6", "-0.05",
-              "0.05", "1.0", "2.0", "16.5")
+
+
+# classes <- classIntervals(dpdat3$ratio_deaths, n = 5, style = "jenks")
+# classes$brks
+# classes2 <- c("-0.6", "-0.05",
+#               "0.05", "1.0", "2.0", "16.5")
 # deaths <- deaths %>%
 #   mutate(percent_class = cut(ratio_deaths, classes2, include.lowest = T))
 # 
@@ -155,54 +147,103 @@ classes2 <- c("-0.6", "-0.05",
 #        Values below 1.0 suggest a DP-calculated mortality rate less than SF")
 
 
-
-ggplot(data = dpdat3, aes(log(sf), abs(ratio_rates))) +
-  geom_point() +
-  geom_smooth() +
-  theme_bw() +
-  facet_grid(sex ~ agegrp) +
-  coord_cartesian(ylim= c(0, 2.6)) +
-  # scale_y_continuous(limits = c(0,2.6), expand = c(0, 0)) +
-  labs(x = "Log(SF Population)",
-       y = "Ratio(COVID-DP / COVID-SF)",
-       title = "Impact of Differential Privacy on County-level COVID-19 mortality rates by sex/age",
-       caption = "Showing only those with Ratios below 2.5
-       Y-axis shows the ratio of using DP or SF in the denominator using age-sex specific mortality rates from Italy applied to SF. 
-       Values below 1.0 suggest a DP-calculated mortality rate less than SF.")
-  d2 <- filter(dpdat3, agegrp == agegrp1,
-               sex %in% c("Male", "Female"))
-quantfunc <-function(agegrp1, popsize, vals){
-
-    # quantile(dpdat3$ratio_rates[which(dpdat3$agegrp == paste0(agegrp1))], c(0.25,.75))
-  #  return(1-ecdf(d2$ratio_rates[which(d2$sf <= popsize)])(vals) +
-  # ecdf(d2$ratio_rates[which(d2$sf <= popsize)])((1-(vals-1))))
-  return(quantile(abs(d2$ratio_rates[which(d2$sf <= popsize)]), 0.5))
-}
-  d2 <- filter(dpdat3, agegrp == agegrp1,
-               # sf <= popsize,
-               sex %in% c("Male", "Female")) 
-calcsize <- function(agegrp1, popsize){
-
-  nrow(d2[which(d2$sf <= popsize),])
-}
-
-quantfunc("80+", a, 1.3)
-a <- data.frame(sizes = seq(100,10000, 100)) %>%
-  group_by(sizes) %>%
-  mutate(
-    MAPE = quantfunc("80+", sizes, 1.3),
-    # without30percent =  quantfunc("80+", sizes, 1.3),
-         n = calcsize("80+", sizes)
-    ) 
-a <- a %>%
-  mutate(percentage = n / 6432)
-
-ggplot(data=a, aes(x=sizes, y = MAPE)) + 
-  geom_line() +
-  theme_bw() +
-  geom_vline(xintercept = 512) +
-  geom_vline(xintercept = 1222) +
-  labs(x = "Median Absolute Percent Error",
-       y = "Population Size")
-
-plot(log(d2$deaths_dp), log(d2$deaths_sf))
+# 
+# top<- ggplot(data = dpdat3, aes(sf, abs(ratio_rates)*100)) +
+#   geom_point() +
+#   geom_smooth(se = FALSE) +
+#   theme_bw() +
+#   facet_grid(sex ~ agegrp) +
+#   coord_cartesian(ylim= c(0, 500), expand = TRUE) +
+#   scale_x_log10(labels=comma) +
+#   theme(axis.text.x = element_text(angle = 90, vjust=0.5, hjust=1)) +
+#   # scale_y_continuous(limits = c(0,2.6), expand = c(0, 0)) +
+#   labs(
+#     x = "True Population",
+#        y = "Absolute % Error",
+#        title = "Absolute Percent Errors using Differential Privacy for County-level COVID-19 mortality\nrates by sex/age"
+#        # caption = "Showing only those with Percent Errors less than 500%."
+#        )
+# 
+# bot <- ggplot(data=dpdat3, aes(sf, group = agegrp)) + 
+#   facet_grid(. ~ agegrp, scales="free_x") +
+#   # geom_density() +
+#   # geom_vline(aes(xintercept=median)) +
+#   # geom_segment(aes(x = 0, y = 0.5, xend = quantile(sf, 0.5),  yend = 0.5)) +
+#   # geom_segment(aes(x = quantile(sf, 0.5), y = 0.5, xend = quantile(sf, 0.5),  yend = -Inf)) +
+#   # geom_ribbon(aes(ymin=0, ymax=a_mean$median, fill=quantile(sf, 0.5))) +
+# geom_line(aes(y = 1 - ..y..), stat='ecdf') +
+#   geom_ribbon(data=temp.below, aes(x=sf, ymin=0,ymax=ecdf), alpha=0.5) +
+#   # geom_ribbon(aes(ymin=0, ymax=1-..y.., fill=quantile(sf, prob=0.5)))
+#   # stat_ecdf(aes( ymin=0,ymax=0.5),geom="ribbon", alpha=0.5) +
+#   # stat_ecdf(geom = "step", aes(1-..y..)) +
+#   # facet_grid(. ~ agegrp) +
+#   scale_x_log10(labels=comma,
+#                 expand = c(0,0)
+#                 # breaks =setbreaks
+#                 ) +
+#   coord_cartesian(xlim = c(10,1000000)) +
+#   theme_bw() +
+#   scale_y_continuous(limits = c(0,1), expand = c(0, 0)) +
+#   theme(axis.text.x = element_text(angle = 90, vjust=0.5, hjust=1),
+#         strip.text = element_blank(),
+#         rect = element_blank(),
+#         panel.border = element_rect(colour = "black")) +
+#   labs(x = "True Population",
+#        y = "")
+# 
+# plot_grid(top, bot, align = "v", axis = "lr",ncol=1,
+#           rel_heights = c(2.5,1),
+#           labels = "auto")
+# 
+#   d2 <- filter(dpdat3, agegrp == agegrp1,
+#                sex %in% c("Male", "Female"))
+#  
+# d2 <- filter(dpdat3, 
+#                # agegrp == agegrp1,
+#                # sf <= popsize,
+#                sex %in% c("Male", "Female")) 
+# quantfunc <-function(popsize, vals){
+#   return(quantile(abs(d2$ratio_rates[which(d2$sf <= popsize)]), 0.5))
+# }
+# meanfunc <- function(popsize){
+#   return(mean(abs(d2$ratio_rates[which(d2$sf <= popsize)])))
+# }
+# rangefunc <- function(popsize){
+#   return(
+#     paste0(
+#       min(abs(d2$ratio_rates[which(d2$sf <= popsize)]))," - ",
+#       max(abs(d2$ratio_rates[which(d2$sf <= popsize)]))
+#       )
+#   )
+# }
+# calcsize <- function(agegrp1, popsize){
+#   nrow(d2[which(d2$sf <= popsize),])
+# }
+# 
+# quantfunc("80+", a, 1.3)
+# a <- data.frame(sizes = seq(1000,10000, 1000)) %>%
+#   group_by(sizes) %>%
+#   mutate(
+#     MAPE = quantfunc(sizes, 1.3),
+#     MEAN = meanfunc(sizes),
+#     RANGE = rangefunc(sizes),
+#     # without30percent =  quantfunc("80+", sizes, 1.3),
+#          n = calcsize("80+", sizes)
+#     )
+# 
+# nrow(d2)
+# a <- a %>%
+#   mutate(
+#     percentage = n / nrow(d2),
+#          )
+# 
+# length(d2$ratio_rates[which(d2$mortrat_dp > 1)])
+# ggplot(data=a, aes(x=sizes, y = MAPE)) + 
+#   geom_line() +
+#   theme_bw() +
+#   geom_vline(xintercept = 512) +
+#   geom_vline(xintercept = 1222) +
+#   labs(x = "Median Absolute Percent Error",
+#        y = "Population Size")
+# 
+# plot(log(d2$deaths_dp), log(d2$deaths_sf))
