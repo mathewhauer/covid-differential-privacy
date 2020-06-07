@@ -10,7 +10,7 @@ fig1 <- ggplot(data = dpdat3, aes(sf, abs(ratio_rates)*100)) +
   theme(axis.text.x = element_text(angle = 90, vjust=0.5, hjust=1)) +
   # scale_y_continuous(limits = c(0,2.6), expand = c(0, 0)) +
   labs(
-    x = "True Population",
+    x = "2010 U.S. Census Summary File ",
     y = "Absolute % Error"
     # title = "Absolute Percent Errors using Differential Privacy for County-level COVID-19 mortality\nrates by sex/age"
     # caption = "Showing only those with Percent Errors less than 500%."
