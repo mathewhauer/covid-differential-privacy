@@ -47,16 +47,20 @@ dpdat2 <- dpdat %>%
                 nathawai_dp = H7Z007_dp,nathawai_sf = H7Z007_sf,
                 someother_dp = H7Z008_dp, someother_sf = H7Z008_sf,
                 multi_dp = H7Z009_dp, multi_sf = H7Z009_sf) %>%
+  mutate(nonwhite_dp = black_dp + hsp_dp + oth_dp + asian_dp + nathawai_dp + someother_dp + multi_dp,
+                nonwhite_sf = black_sf + hsp_sf + oth_sf + asian_sf + nathawai_sf + someother_sf + multi_sf) %>%
   # group_by(fips, name_dp) %>%
-  pivot_longer(cols = white_dp:multi_sf, names_to = "race", values_to ="pop") %>%
+  pivot_longer(cols = white_dp:nonwhite_sf, names_to = "race", values_to ="pop") %>%
   separate(race, into= c("race", "type"), sep = "_") %>%
   pivot_wider(names_from = type, values_from = "pop") %>%
-  mutate(cov_sf = (sf * 0.7*0.01) / sf,
-         cov_dp = ((sf * 0.7*0.01) / dp),
-         ratio = (cov_dp / cov_sf)) %>%
-  na.omit %>%
-  filter(ratio <=2.5)
+  mutate(cov_sf = (sf *0.05) / sf,
+         cov_dp = ((sf *0.05) / dp),
+         ratio = (cov_dp / cov_sf)-1) %>%
+  na.omit 
 
+# omitting all NaN and Inf values
+dpdat2[mapply(is.infinite, dpdat2)] <- NA 
+dpdat2 <- na.omit(dpdat2)
 # 
 # combined <- left_join(dpdat2, dat) %>%
 #   mutate(caserat_dp = cases / H7Z001_dp,
@@ -75,13 +79,61 @@ ggplot(data = dpdat2, aes(cov_dp, cov_sf)) +
   labs(x = "Log(SF Population)",
        y = "Log(COVID-DP / COVID-SF)")
 
-ggplot(data = dpdat2, aes(log(sf), ratio)) +
+ggplot(data = dpdat2, aes(sf, abs(ratio)*100)) +
   geom_point() +
-  geom_smooth() +
+  geom_smooth(se = FALSE) +
   theme_bw() +
+  scale_x_log10(labels=comma) +
+  coord_cartesian(ylim= c(0, 500), expand = TRUE) +
   facet_wrap(~ race) +
-  labs(x = "Log(SF Population)",
-       y = "Ratio(COVID-DP / COVID-SF)",
-       title = "Impact of Differential Privacy on County-level COVID-19 mortality rates by race/eth",
-       caption = "Y-axis shows the ratio of using DP or SF in the denominator for a hypothetical 70% infection and 1% mortality rate. 
-       Values below 1.0 suggest a DP-calculated mortality rate less than SF")
+  theme(axis.text.x = element_text(angle = 90, vjust=0.5, hjust=1)) +
+  # scale_y_continuous(limits = c(0,2.6), expand = c(0, 0)) +
+  labs(
+    x = "2010 U.S. Census Summary File ",
+    y = "Absolute % Error"
+    # title = "Absolute Percent Errors using Differential Privacy for County-level COVID-19 mortality\nrates by sex/age"
+    # caption = "Showing only those with Percent Errors less than 500%."
+  )
+
+d2 <- dpdat2
+
+quantfunc <-function(popsize, vals){
+  return(quantile(abs(d2$ratio[which(d2$sf < popsize)]), 0.5))
+}
+meanfunc <- function(popsize){
+  return(mean(abs(d2$ratio[which(d2$sf < popsize)]), na.omit = T))
+}
+rangefunc <- function(popsize){
+  return(
+    paste0(
+      min(abs(d2$ratio[which(d2$sf <= popsize)]))," - ",
+      max(abs(d2$ratio[which(d2$sf <= popsize)]))
+    )
+  )
+}
+calcsize <- function(agegrp1, popsize){
+  nrow(d2[which(d2$sf <= popsize),])
+}
+
+quantfunc("80+", a, 1.3)
+a <- data.frame(sizes = 
+                  # seq(1000,10000, 1000)
+                  c(1000, 2500,5000, 10000, 20000, 1000000)
+) %>%
+  group_by(sizes) %>%
+  mutate(
+    MAPE = quantfunc(sizes, 1.3),
+    MEAN = meanfunc(sizes),
+    RANGE = rangefunc(sizes),
+    # without30percent =  quantfunc("80+", sizes, 1.3),
+    n = calcsize("80+", sizes)
+  )
+
+nrow(d2)
+
+##  TABLE DATA
+
+a <- a %>%
+  mutate(
+    percentage = n / nrow(d2),
+  )

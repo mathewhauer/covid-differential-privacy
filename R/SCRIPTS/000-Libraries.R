@@ -35,39 +35,21 @@ if (!require("pacman", character.only = TRUE)){
 pkgs <- c(
   "tidyverse",     # Tidyverse
   "data.table",    # Data Management/Manipulation
-  "doParallel",    # Parallel Computing
-  "foreach",       # Parallel Computing
   "openxlsx",      # Microsoft Excel Files
   "stringi",       #Character/String Editor
   "stringr",       # Character/String Editor
   "reshape2",      # Data Management/Manipulation
   "scales",        # Number formatting
   "cowplot",       # Plot Grids
-  "tmap",          # Cartography
-  "tmaptools",     # Cartographic tools
-  "sp",            # Spatial Objects
-  "grid",          # Plot Grids
   "kableExtra",    # Pretty Tables
-  "pdftools",      # Load pdfs
   "R.utils",       # Utilities
   "IDPmisc",        # Quality na.rm
   "ggrepel",
-  "raster",
-  "gridExtra",
-  "magick",
-  "pdftools",
   "readxl",
-  "zoo",
-  "bsts",
-  "CausalImpact",
-  "kableExtra",
-  "lettercase",
-  "philentropy",
-  "ggridges",
   "janitor",
   "gghighlight",
-  "tidycensus",
-  "classInt"
+  "classInt",
+  "cowplot"
   
 )
 
@@ -84,12 +66,3 @@ if(!sum(!p_isinstalled(pkgs))==0){
 # load the packages
 p_load(pkgs, character.only = TRUE)
 rm(pkgs)
-
-##Parallel Computing 
-# Establish Parallel Computing Cluster
-clusters <- makeCluster(detectCores() - 1) # Create Cluster with Specified Number of Cores
-registerDoParallel(clusters) # Register Cluster
-# Parallel Computing Details
-getDoParWorkers() # Determine Number of Utilized Clusters
-getDoParName() #  Name of the Currently Registered Parallel Computing Backend
-getDoParVersion() #  Version of the Currently Registered Parallel Computing Backend

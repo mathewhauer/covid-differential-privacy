@@ -1,8 +1,11 @@
+###------DataLoad-----
+## @knitr DataLoad
 
-source("./R/SCRIPTS/000-Libraries.R")
+# 
+# source("./R/SCRIPTS/000-Libraries.R")
 
 # Getting the differential privacy data into R
-dpdat <- read.xlsx("./R/DATA-PROCESSED/Summary_File.xlsx", sheet = 1)
+dpdat <- read.xlsx("../R/DATA-PROCESSED/Summary_File.xlsx", sheet = 1)
 
 # The male and female variables by age. Creating this for later.
 vars_male <- paste0("H",seq(76002,76025, 1))
@@ -97,7 +100,7 @@ dpdatatot <- dpdat2 %>%
   ))
 
 # Joining the sex-specific and total data files. Then creating some variables.
-dpdat3 <- rbind(dpdat2, dpdatatot) %>%
+dpage <- rbind(dpdat2, dpdatatot) %>%
    mutate(fatrate = fatrate/100,
  deaths_sf = sf * fatrate, 
  deaths_dp = dp * fatrate,
@@ -105,12 +108,64 @@ dpdat3 <- rbind(dpdat2, dpdatatot) %>%
  mortrat_sf = deaths_sf / sf,
  ratio_rates = (mortrat_dp / mortrat_sf)-1, # The ratio of DP fatality rates to SF fatality rates
  ratio_deaths = (deaths_dp / deaths_sf)-1,
- sf2 = log(sf)
+ sf2 = log(sf),
+ highlight = ifelse(mortrat_dp>1,"1","0")
   )  
 # omitting all NaN and Inf values
-dpdat3[mapply(is.infinite, dpdat3)] <- NA 
-dpdat3 <- na.omit(dpdat3)
+dpage[mapply(is.infinite, dpage)] <- NA 
+dpage <- na.omit(dpage)
 
+dprace <- dpdat %>%
+  mutate(fips = paste0(STFIPS, CTYFIPS),
+         # oth_dp = (H7Z006_dp + H7Z007_dp +H7Z008_dp +H7Z009_dp),
+         # oth_sf = (H7Z006_sf + H7Z007_sf +H7Z008_sf +H7Z009_sf)
+  ) %>%
+  dplyr::select(fips, STFIPS, name_dp, 
+                white_dp = H7Z003_dp, 
+                white_sf = H7Z003_sf,
+                black_dp = H7Z004_dp, 
+                black_sf = H7Z004_sf, 
+                hsp_dp = H7Z010_dp, 
+                hsp_sf = H7Z010_sf,
+                # oth_dp, 
+                # oth_sf, 
+                natam_dp = H7Z005_dp, 
+                natam_sf = H7Z005_sf, 
+                asian_dp = H7Z006_dp, 
+                asian_sf = H7Z006_sf,
+                nathawai_dp = H7Z007_dp,
+                nathawai_sf = H7Z007_sf,
+                someother_dp = H7Z008_dp, 
+                someother_sf = H7Z008_sf,
+                multi_dp = H7Z009_dp, 
+                multi_sf = H7Z009_sf) %>%
+  mutate(nonwhite_dp = black_dp + hsp_dp + natam_dp +asian_dp + nathawai_dp + someother_dp + multi_dp,
+         nonwhite_sf = black_sf + hsp_sf + natam_sf +asian_sf + nathawai_sf + someother_sf + multi_sf) %>%
+  # group_by(fips, name_dp) %>%
+  pivot_longer(cols = white_dp:nonwhite_sf, names_to = "race", values_to ="pop") %>%
+  separate(race, into= c("race", "type"), sep = "_") %>%
+  pivot_wider(names_from = type, values_from = "pop") %>%
+  mutate(cov_sf = (sf *0.05) / sf,
+         cov_dp = ((sf *0.05) / dp),
+         ratio = (cov_dp / cov_sf)-1) %>%
+  na.omit 
+
+# omitting all NaN and Inf values
+dprace[mapply(is.infinite, dprace)] <- NA 
+dprace <- na.omit(dprace)
+
+dprace$race <- recode_factor(dprace$race, 
+                             
+                             "black" = "Black Alone",
+                             "natam" = "Am Ind and Alsk Nat Alone",
+                             "asian" = "Asian Alone",
+                             "nathawai" = "Nat Haw and Oth Pac Isld Alone",
+                             "someother" = "Some other race Alone",
+                             "multi" = "Two or more races",
+                             "hsp" = "Hispanic",
+                             "white" = "White Alone",
+                             "nonwhite" = "Non-White"
+)
 
 
 # classes <- classIntervals(dpdat3$ratio_deaths, n = 5, style = "jenks")

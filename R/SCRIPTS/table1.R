@@ -23,7 +23,10 @@ calcsize <- function(agegrp1, popsize){
 }
 
 quantfunc("80+", a, 1.3)
-a <- data.frame(sizes = seq(1000,10000, 1000)) %>%
+a <- data.frame(sizes = 
+                  # seq(1000,10000, 1000)
+                  c(1000, 2500,5000, 10000, 20000, 1000000)
+                ) %>%
   group_by(sizes) %>%
   mutate(
     MAPE = quantfunc(sizes, 1.3),
@@ -59,3 +62,21 @@ length(d2$ratio_rates[which(d2$sf<500000)])
 mean(abs(d2$ratio_rates))
 length(d2$ratio_rates)
 
+
+         
+1-ecdf(abs(d2$ratio_rates[which(d2$sf <1000)]))(0.25)
+
+ggplot(d2, aes(x =sf, y = mortrat_dp)) +
+  geom_point() +
+  theme_bw() +
+  geom_hline(yintercept = 1) +
+  # facet_grid(sex ~ agegrp) +
+  scale_x_log10(labels=comma) +
+  # yscale("log2", .format = TRUE)
+  theme(axis.text.x = element_text(angle = 90, vjust=0.5, hjust=1)) +
+  labs(
+    x = "2010 U.S. Census Summary File ",
+    y = "COVID-19 Mortality Rate using DP as the denominator"
+    # title = "Absolute Percent Errors using Differential Privacy for County-level COVID-19 mortality\nrates by sex/age"
+    # caption = "Showing only those with Percent Errors less than 500%."
+  )
