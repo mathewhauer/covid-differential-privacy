@@ -5,7 +5,7 @@
 # source("./R/SCRIPTS/000-Libraries.R")
 
 # Getting the differential privacy data into R
-dpdat <- read.xlsx("./R/DATA-PROCESSED/Summary_File.xlsx", sheet = 1)
+dpdat <- read.xlsx("../R/DATA-PROCESSED/Summary_File.xlsx", sheet = 1)
 
 # The male and female variables by age. Creating this for later.
 vars_male <- paste0("H",seq(76002,76025, 1))
@@ -109,17 +109,17 @@ dpage <- rbind(dpdat2, dpdatatot) %>%
  ratio_rates = (mortrat_dp / mortrat_sf)-1, # The ratio of DP fatality rates to SF fatality rates
  ratio_deaths = (deaths_dp / deaths_sf)-1,
  sf2 = log(sf),
- highlight = ifelse(mortrat_dp>1,"1","0")
+ highlight = ifelse(mortrat_dp>1,"1","0") # This is used in Figure 1 to highlight mortality rates above 1.0
   )  
 # omitting all NaN and Inf values
 dpage[mapply(is.infinite, dpage)] <- NA 
 dpage <- na.omit(dpage)
 
+
+# Creating the Race/Ethnicity dataset from the DP data.
 dprace <- dpdat %>%
-  mutate(fips = paste0(STFIPS, CTYFIPS),
-         # oth_dp = (H7Z006_dp + H7Z007_dp +H7Z008_dp +H7Z009_dp),
-         # oth_sf = (H7Z006_sf + H7Z007_sf +H7Z008_sf +H7Z009_sf)
-  ) %>%
+  mutate(fips = paste0(STFIPS, CTYFIPS)) %>%
+  # Renaming the variables to be more intuitive
   dplyr::select(fips, STFIPS, name_dp, 
                 white_dp = H7Z003_dp, 
                 white_sf = H7Z003_sf,
@@ -127,8 +127,6 @@ dprace <- dpdat %>%
                 black_sf = H7Z004_sf, 
                 hsp_dp = H7Z010_dp, 
                 hsp_sf = H7Z010_sf,
-                # oth_dp, 
-                # oth_sf, 
                 natam_dp = H7Z005_dp, 
                 natam_sf = H7Z005_sf, 
                 asian_dp = H7Z006_dp, 
@@ -139,15 +137,18 @@ dprace <- dpdat %>%
                 someother_sf = H7Z008_sf,
                 multi_dp = H7Z009_dp, 
                 multi_sf = H7Z009_sf) %>%
+  # Creating a nonwhite category
   mutate(nonwhite_dp = black_dp + hsp_dp + natam_dp +asian_dp + nathawai_dp + someother_dp + multi_dp,
          nonwhite_sf = black_sf + hsp_sf + natam_sf +asian_sf + nathawai_sf + someother_sf + multi_sf) %>%
   # group_by(fips, name_dp) %>%
   pivot_longer(cols = white_dp:nonwhite_sf, names_to = "race", values_to ="pop") %>%
   separate(race, into= c("race", "type"), sep = "_") %>%
   pivot_wider(names_from = type, values_from = "pop") %>%
+  # Assuming a 5% mortality rate by race.
   mutate(cov_sf = (sf *0.05) / sf,
          cov_dp = ((sf *0.05) / dp),
-         ratio_rates = (cov_dp / cov_sf)-1) %>%
+         ratio_rates = (cov_dp / cov_sf)-1,
+         highlight = ifelse((sf *0.05)>dp,"1","0")) %>%
   na.omit 
 
 # omitting all NaN and Inf values
@@ -155,7 +156,6 @@ dprace[mapply(is.infinite, dprace)] <- NA
 dprace <- na.omit(dprace)
 
 dprace$race <- recode_factor(dprace$race, 
-                             
                              "black" = "Black Alone",
                              "natam" = "Am Ind and Alsk Nat Alone",
                              "asian" = "Asian Alone",
@@ -166,139 +166,3 @@ dprace$race <- recode_factor(dprace$race,
                              "white" = "White Alone",
                              "nonwhite" = "Non-White"
 )
-
-
-# classes <- classIntervals(dpdat3$ratio_deaths, n = 5, style = "jenks")
-# classes$brks
-# classes2 <- c("-0.6", "-0.05",
-#               "0.05", "1.0", "2.0", "16.5")
-# deaths <- deaths %>%
-#   mutate(percent_class = cut(ratio_deaths, classes2, include.lowest = T))
-# 
-# # a<- get_acs(geography = "county",
-# #             variables = "B19013_001",
-# #             geometry = TRUE, shift_geo = TRUE)
-# 
-# counties <- left_join(a, deaths) %>%
-#   na.omit
-# 
-# ggplot(subset(counties, !is.na(percent_class)), aes(
-#   geometry = geometry,
-#                      fill = percent_class)) + 
-#   geom_sf(color = NA) + 
-#   scale_fill_brewer(palette = "PuBu",
-#                     name = "No qualifications (%)") +
-#   # coord_sf(crs = 26911) + 
-#   scale_fill_viridis_d(option = "magma")
-# 
-# ggplot(data = filter(deaths,ratio_rates <= 2.5), aes(log(sf), ratio_rates)) +
-#   geom_point() +
-#   geom_smooth() +
-#   theme_bw() +
-#   labs(x = "Log(SF Population)",
-#        y = "Ratio(COVID-DP / COVID-SF)",
-#        title = "Impact of Differential Privacy on County-level COVID-19 mortality rates",
-#        caption = "Y-axis shows the ratio of aggregated age-sex specific mort rates using DP or SF in the denominator. 
-#        Values below 1.0 suggest a DP-calculated mortality rate less than SF")
-
-
-# 
-# top<- ggplot(data = dpdat3, aes(sf, abs(ratio_rates)*100)) +
-#   geom_point() +
-#   geom_smooth(se = FALSE) +
-#   theme_bw() +
-#   facet_grid(sex ~ agegrp) +
-#   coord_cartesian(ylim= c(0, 500), expand = TRUE) +
-#   scale_x_log10(labels=comma) +
-#   theme(axis.text.x = element_text(angle = 90, vjust=0.5, hjust=1)) +
-#   # scale_y_continuous(limits = c(0,2.6), expand = c(0, 0)) +
-#   labs(
-#     x = "True Population",
-#        y = "Absolute % Error",
-#        title = "Absolute Percent Errors using Differential Privacy for County-level COVID-19 mortality\nrates by sex/age"
-#        # caption = "Showing only those with Percent Errors less than 500%."
-#        )
-# 
-# bot <- ggplot(data=dpdat3, aes(sf, group = agegrp)) + 
-#   facet_grid(. ~ agegrp, scales="free_x") +
-#   # geom_density() +
-#   # geom_vline(aes(xintercept=median)) +
-#   # geom_segment(aes(x = 0, y = 0.5, xend = quantile(sf, 0.5),  yend = 0.5)) +
-#   # geom_segment(aes(x = quantile(sf, 0.5), y = 0.5, xend = quantile(sf, 0.5),  yend = -Inf)) +
-#   # geom_ribbon(aes(ymin=0, ymax=a_mean$median, fill=quantile(sf, 0.5))) +
-# geom_line(aes(y = 1 - ..y..), stat='ecdf') +
-#   geom_ribbon(data=temp.below, aes(x=sf, ymin=0,ymax=ecdf), alpha=0.5) +
-#   # geom_ribbon(aes(ymin=0, ymax=1-..y.., fill=quantile(sf, prob=0.5)))
-#   # stat_ecdf(aes( ymin=0,ymax=0.5),geom="ribbon", alpha=0.5) +
-#   # stat_ecdf(geom = "step", aes(1-..y..)) +
-#   # facet_grid(. ~ agegrp) +
-#   scale_x_log10(labels=comma,
-#                 expand = c(0,0)
-#                 # breaks =setbreaks
-#                 ) +
-#   coord_cartesian(xlim = c(10,1000000)) +
-#   theme_bw() +
-#   scale_y_continuous(limits = c(0,1), expand = c(0, 0)) +
-#   theme(axis.text.x = element_text(angle = 90, vjust=0.5, hjust=1),
-#         strip.text = element_blank(),
-#         rect = element_blank(),
-#         panel.border = element_rect(colour = "black")) +
-#   labs(x = "True Population",
-#        y = "")
-# 
-# plot_grid(top, bot, align = "v", axis = "lr",ncol=1,
-#           rel_heights = c(2.5,1),
-#           labels = "auto")
-# 
-#   d2 <- filter(dpdat3, agegrp == agegrp1,
-#                sex %in% c("Male", "Female"))
-#  
-# d2 <- filter(dpdat3, 
-#                # agegrp == agegrp1,
-#                # sf <= popsize,
-#                sex %in% c("Male", "Female")) 
-# quantfunc <-function(popsize, vals){
-#   return(quantile(abs(d2$ratio_rates[which(d2$sf <= popsize)]), 0.5))
-# }
-# meanfunc <- function(popsize){
-#   return(mean(abs(d2$ratio_rates[which(d2$sf <= popsize)])))
-# }
-# rangefunc <- function(popsize){
-#   return(
-#     paste0(
-#       min(abs(d2$ratio_rates[which(d2$sf <= popsize)]))," - ",
-#       max(abs(d2$ratio_rates[which(d2$sf <= popsize)]))
-#       )
-#   )
-# }
-# calcsize <- function(agegrp1, popsize){
-#   nrow(d2[which(d2$sf <= popsize),])
-# }
-# 
-# quantfunc("80+", a, 1.3)
-# a <- data.frame(sizes = seq(1000,10000, 1000)) %>%
-#   group_by(sizes) %>%
-#   mutate(
-#     MAPE = quantfunc(sizes, 1.3),
-#     MEAN = meanfunc(sizes),
-#     RANGE = rangefunc(sizes),
-#     # without30percent =  quantfunc("80+", sizes, 1.3),
-#          n = calcsize("80+", sizes)
-#     )
-# 
-# nrow(d2)
-# a <- a %>%
-#   mutate(
-#     percentage = n / nrow(d2),
-#          )
-# 
-# length(d2$ratio_rates[which(d2$mortrat_dp > 1)])
-# ggplot(data=a, aes(x=sizes, y = MAPE)) + 
-#   geom_line() +
-#   theme_bw() +
-#   geom_vline(xintercept = 512) +
-#   geom_vline(xintercept = 1222) +
-#   labs(x = "Median Absolute Percent Error",
-#        y = "Population Size")
-# 
-# plot(log(d2$deaths_dp), log(d2$deaths_sf))

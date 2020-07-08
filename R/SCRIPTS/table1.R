@@ -1,33 +1,31 @@
-source("./R/SCRIPTS/001-DataLoad.R")
+###------Table1-----
+## @knitr Table1
 
-
-quantfunc <-function(popsize, vals){
+# Helper function to calculate the Median for all sf sizes below `popsize`
+quantfunc <-function(popsize){
   return(quantile(abs(d2$ratio_rates[which(d2$sf < popsize)]), 0.5))
 }
+
+# Helper function to calculate the mean for all sf sizes below `popsize`
 meanfunc <- function(popsize){
   return(mean(abs(d2$ratio_rates[which(d2$sf < popsize)])))
 }
-rangefunc <- function(popsize){
-  return(
-    paste0(
-      min(abs(d2$ratio_rates[which(d2$sf <= popsize)]))," - ",
-      max(abs(d2$ratio_rates[which(d2$sf <= popsize)]))
-    )
-  )
-}
-calcsize <- function(agegrp1, popsize){
+
+# Helper function to calculate the # of rows for all sf sizes below `popsize`.
+calcsize <- function(popsize){
   nrow(d2[which(d2$sf <= popsize),])
 }
 
+# Creating the age dataset, selecting only Male and Female and not Total
 d2 <- filter(dpage, sex %in% c("Male", "Female")) 
 
+# Creating the dataframe to do the calculations
 age <- data.frame(sizes = c(1000, 2500,5000, 10000, 20000, 10000000)) %>%
   group_by(sizes) %>%
   mutate(
-    MAPE = quantfunc(sizes, 1.3),
+    MEDIAN = quantfunc(sizes),
     MEAN = meanfunc(sizes),
-    RANGE = rangefunc(sizes),
-    n = calcsize("80+", sizes)
+    n = calcsize(sizes)
   )
 
 
@@ -38,19 +36,23 @@ table_age <- age %>%
     percentage = n / nrow(d2),
   )
 
+# Creating the race dataset, deselecting the created "nonwhite" variable.
 d2 <- filter(dprace, race !="nonwhite") 
 
 race <- data.frame(sizes = c(1000, 2500,5000, 10000, 20000, 10000000)) %>%
   group_by(sizes) %>%
   mutate(
-    MAPE = quantfunc(sizes, 1.3),
+    MEDIAN = quantfunc(sizes),
     MEAN = meanfunc(sizes),
-    RANGE = rangefunc(sizes),
-    n = calcsize("80+", sizes)
+    n = calcsize(sizes)
   )
 
 table_race <- race %>%
   mutate(
     percentage = n / nrow(d2),
   )
+
+table_age
+table_race
+
 

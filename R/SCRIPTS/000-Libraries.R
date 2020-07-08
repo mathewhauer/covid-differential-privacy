@@ -48,8 +48,7 @@ pkgs <- c(
   "readxl",
   "janitor",
   "gghighlight",
-  "classInt",
-  "cowplot"
+  "classInt"
   
 )
 

@@ -1,7 +1,7 @@
 ###------PopPyramid-----
 ## @knitr PopPyramid
 
-source("./R/SCRIPTS/001-DataLoad.R")
+# source("./R/SCRIPTS/001-DataLoad.R")
 
 fipslist <- read_csv(file="https://www2.census.gov/geo/docs/reference/codes/files/national_county.txt", col_names = FALSE) %>%
   mutate(GEOID = paste0(X2, X3)) %>%
@@ -72,5 +72,6 @@ pyramids <- ggplot(poppyramids,aes(x= AGE2)) +
   labs(y = "% of Population",
        x = "")
   
-ggsave("./MANUSCRIPT/FIGURES/fig-pyramids.png", pyramids, width = 11, height = 7)
+pyramids
+# ggsave("./MANUSCRIPT/FIGURES/fig-pyramids.png", pyramids, width = 11, height = 7)
 
