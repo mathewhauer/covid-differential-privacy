@@ -5,7 +5,7 @@
 # source("./R/SCRIPTS/000-Libraries.R")
 
 # Getting the differential privacy data into R
-dpdat <- read.xlsx("../R/DATA-PROCESSED/Summary_File.xlsx", sheet = 1)
+dpdat <- read.xlsx("./R/DATA-PROCESSED/Summary_File.xlsx", sheet = 1)
 
 # The male and female variables by age. Creating this for later.
 vars_male <- paste0("H",seq(76002,76025, 1))
@@ -147,7 +147,7 @@ dprace <- dpdat %>%
   pivot_wider(names_from = type, values_from = "pop") %>%
   mutate(cov_sf = (sf *0.05) / sf,
          cov_dp = ((sf *0.05) / dp),
-         ratio = (cov_dp / cov_sf)-1) %>%
+         ratio_rates = (cov_dp / cov_sf)-1) %>%
   na.omit 
 
 # omitting all NaN and Inf values

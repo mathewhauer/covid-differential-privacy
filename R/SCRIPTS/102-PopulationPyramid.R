@@ -3,6 +3,18 @@
 
 source("./R/SCRIPTS/001-DataLoad.R")
 
+fipslist <- read_csv(file="https://www2.census.gov/geo/docs/reference/codes/files/national_county.txt", col_names = FALSE) %>%
+  mutate(GEOID = paste0(X2, X3)) %>%
+  dplyr::rename(state = X1,
+                STATEID = X2,
+                CNTYID = X3,
+                NAME = X4) %>%
+  filter(!STATEID %in% c("60", "66", "69", "72", "74", "78")) %>% # filtering out the outerlying areas.
+  group_by(STATEID, state) %>%
+  dplyr::summarise(STFIPS = STATEID) %>%
+  unique()
+
+
 proj_sexage1 <- dpdat2 %>%
   mutate(dp2 = ifelse(sex=="Male", -1*dp, dp),
          sf2 = ifelse(sex=="Male", -1*sf,sf),
@@ -19,42 +31,46 @@ proj_sexage1 <- dpdat2 %>%
          )
 ) %>%
   na.omit
-# proj_sexage1$AGE2 <- factor(proj_sexage1$AGE2, levels = proj_sexage1$AGE2, labels = proj_sexage1$AGE2)
 
 scalelabs <- c("00-09", "10-19", "20-29", "30-39", "40-49", "50-59", "60-69", "70-79",
                "80+")
 
-collegecampuses<- proj_sexage1[which(proj_sexage1$fips %in% c("01001","48317", "50013",
+poppyramids<- proj_sexage1[which(proj_sexage1$fips %in% c("01001","48317", "50013",
                                                   "16029", "38087", "48011")),] %>%
-  filter(sex != "Total")
+  filter(sex != "Total") %>%
+  group_by(fips, sex) %>%
+  mutate(sf3 = sf2 / sum(sf2),
+         dp3 = dp2 / sum(dp2),
+         sf3 = ifelse(sex=="Male", -1*sf3, sf3),
+         dp3 = ifelse(sex=="Male", -1*dp3, dp3)) %>%
+  left_join(., fipslist) %>%
+  mutate(County = paste0(name_dp,", ", state)) %>%
+  I()
 
-ggplot(collegecampuses,aes(x= AGE2)) +
-  geom_col(aes(y=sf2), color="black") +
+pyramids <- ggplot(poppyramids,aes(x= AGE2)) +
+  geom_col(aes(y=sf3, fill = "Summary File"), color = "black") +
       geom_segment(aes(x=AGE2, 
                    xend=AGE2, 
                    y=0, 
-                   yend=dp2,
-                   color = "2020")) +
-  # scale_color_manual(name = "", values = c("2020" = "red")) +
-  # scale_fill_manual(name = "", values = c("2100" = NA)) +
-  geom_point(aes(y = dp2), color = "red") +
+                   yend=dp3,
+                   color = "Differential Privacy")) +
+  
+  geom_point(aes(y = dp3, color = "Differential Privacy")) +
+  scale_fill_manual(name = "", values = c("Summary File" = "dark grey")) +
+  scale_color_manual(name = "", values = c("Differential Privacy" = "red")) +
   theme_bw() +
-  theme(legend.position = "none") +
-    # legend.position = c(0.9, 0.3),
-    #     legend.background = element_rect(fill=alpha('white', 0)))+
-  # scale_y_continuous(limits = c(-16000000, 16000000),
-  #   breaks = seq(-15000000, 15000000, 5000000), 
-  #                    labels = paste0(as.character(c(seq(15, 0, -5), seq(5, 15, 5))), "m")) +
+  theme(legend.position = "bottom") +
+  scale_y_continuous(breaks=seq(-.4,.4,.2),labels=percent(abs(seq(-.40,.40,.2)))) +
   scale_x_continuous(breaks = seq(1,9,1),
     sec.axis =dup_axis(),
                      labels = paste0(scalelabs),
     expand = c(0,0.1)) +
   coord_flip() +
-  facet_wrap(. ~ fips, scales = "free") +
-  # annotate("text", x=1, y =100, label ="Female") +
-  # annotate("text", x=1, y =-100, label ="Male") +
-  labs(y = "Population",
+  facet_wrap(. ~ County) +
+  annotate("text", x=1, y =.3, label ="Female") +
+  annotate("text", x=1, y =-.4, label ="Male") +
+  labs(y = "% of Population",
        x = "")
   
-
+ggsave("./MANUSCRIPT/FIGURES/fig-pyramids.png", pyramids, width = 11, height = 7)
 
