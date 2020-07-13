@@ -1,7 +1,7 @@
 # Differential privacy in the 2020 Census will distort COVID-19 rates
 
 # Introduction
-Here we provide the data and code for:  [**Differential privacy in the 2020 Census will distort COVID-19 rates**](https://github.com/mathewhauer/covid-differential-privacy/blob/master/MainDocument.docx)
+Here we provide the data and code for:  [**Differential privacy in the 2020 Census will distort COVID-19 rates**](http://github.com/mathewhauer/covid-differential-privacy/blob/master/MANUSCRIPT/MainDocument.pdf)
 
 ### Citation
 
@@ -16,7 +16,7 @@ Here we provide the data and code for:  [**Differential privacy in the 2020 Cens
 
 We show only those county age-sex groups with less than 500% error. Red dots correspond to county age-sex groups with mortality rates that impossibly exceed 1.0.
 
-To see all of the underlying code and the results, [click here](http://htmlpreview.github.io/?https://github.com/mathewhauer/covid-differential-privacy/blob/master/MANUSCRIPT/reproduce.html)
+To see all of the underlying code and the results, [click here](http://htmlpreview.github.io/?https://raw.githubusercontent.com/mathewhauer/covid-differential-privacy/master/MANUSCRIPT/Reproduction.html?token=AD7TDMOKFTUASWG5HUOOGSS7CYW3G)
 
 # Organization
 - `/R/SCRIPTS/`  — Scripts and output for figures included in the main document.
@@ -24,8 +24,6 @@ To see all of the underlying code and the results, [click here](http://htmlprevi
 - `/R/DATA-PROCESSED/` — Post-processed data for our analysis.
 
 - `/MANUSCRIPT/reproduce.Rmd` — contains a replication for underlying estimates.
-
-
 
 # Use
 - Feel free to create a new branch for further incorporation and analysis. 
