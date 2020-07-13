@@ -102,8 +102,8 @@ dpdatatot <- dpdat2 %>%
 # Joining the sex-specific and total data files. Then creating some variables.
 dpage <- rbind(dpdat2, dpdatatot) %>%
    mutate(fatrate = fatrate/100,
- deaths_sf = sf * fatrate, 
- deaths_dp = dp * fatrate,
+ deaths_sf = sf * fatrate * 0.70, 
+ deaths_dp = dp * fatrate * 0.70,
  mortrat_dp = deaths_sf / dp, # These two calcs use the deaths from SF only since SF is the true population we would expect to die rather than the noise infused population.
  mortrat_sf = deaths_sf / sf,
  ratio_rates = (mortrat_dp / mortrat_sf)-1, # The ratio of DP fatality rates to SF fatality rates
@@ -145,8 +145,8 @@ dprace <- dpdat %>%
   separate(race, into= c("race", "type"), sep = "_") %>%
   pivot_wider(names_from = type, values_from = "pop") %>%
   # Assuming a 5% mortality rate by race.
-  mutate(cov_sf = (sf *0.05) / sf,
-         cov_dp = ((sf *0.05) / dp),
+  mutate(cov_sf = (sf *0.05 * 0.70) / sf,
+         cov_dp = ((sf *0.05 * 0.70) / dp),
          ratio_rates = (cov_dp / cov_sf)-1,
          highlight = ifelse((sf *0.05)>dp,"1","0")) %>%
   na.omit 

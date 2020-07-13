@@ -18,31 +18,31 @@ read_chunk('../R/SCRIPTS/table1.R')
 ```
 # Libraries Required
 
-```{r libraries, echo=TRUE, message = FALSE, warning = FALSE, cache=TRUE}
+```{r libraries, echo=TRUE, message = FALSE, warning = FALSE, cache=FALSE} 
 ```
 
 # Data Load and Manipulation
-```{r DataLoad, echo=TRUE, message = FALSE, warning = FALSE, cache=TRUE}
+```{r DataLoad, echo=TRUE, message = FALSE, warning = FALSE, cache=FALSE} 
 ```
 
 # Figures
 ## Population Pyramid
 
-```{r PopPyramid, echo=TRUE, message = FALSE, warning = FALSE, cache=TRUE, dev = c("png", "pdf"), dpi=300,fig.cap= paste("Changes in population pyramids due to the implementation of differential privacy in 2010 U.S. Census data for six US counties. \\label{fig-poppyramid}")}
+```{r PopPyramid, echo=TRUE, message = FALSE, warning = FALSE, cache=FALSE, dev = c("png", "pdf"), dpi=300,fig.cap= paste("Changes in population pyramids due to the implementation of differential privacy in 2010 U.S. Census data for six US counties. \\label{fig-poppyramid}")} 
 ```
 
 ## Age-Sex Specific Figure
 
-```{r FigureAgeMultipanel, echo=TRUE, message = FALSE, warning = FALSE, cache=TRUE, dev = c("png", "pdf"), dpi=300,fig.cap= paste("The distortion of COVID-19 age-sex specific mortality rates for US counties. We show only those county age-sex groups with less than 500% error. Red dots correspond to county age-sex groups with mortality rates that impossibly exceed 1.0. \\label{fig-agesex}")}
+```{r FigureAgeMultipanel, echo=TRUE, message = FALSE, warning = FALSE, cache=FALSE, dev = c("png", "pdf"), dpi=300,fig.cap= paste("The distortion of COVID-19 age-sex specific mortality rates for US counties. We show only those county age-sex groups with less than 500% error. Red dots correspond to county age-sex groups with mortality rates that impossibly exceed 1.0. \\label{fig-agesex}")} 
 ```
 
 ## Race Specific Figure
 
-```{r FigureRaceMultipanel, echo=TRUE, message = FALSE, warning = FALSE, cache=TRUE, dev = c("png", "pdf"), dpi=300,fig.cap= paste("The distortion of COVID-19 race-specific mortality rates for US counties. We show only those county race groups with less than 500% error. \\label{fig-race}")}
+```{r FigureRaceMultipanel, echo=TRUE, message = FALSE, warning = FALSE, cache=FALSE, dev = c("png", "pdf"), dpi=300,fig.cap= paste("The distortion of COVID-19 race-specific mortality rates for US counties. We show only those county race groups with less than 500% error. \\label{fig-race}")} 
 ```
 
 # Tables
 ## Table 1
 
-```{r Table1, echo=TRUE, message = FALSE, warning = FALSE, cache=TRUE}
+```{r Table1, echo=TRUE, message = FALSE, warning = FALSE, cache=FALSE} 
 ```
