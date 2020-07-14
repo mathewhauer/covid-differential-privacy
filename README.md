@@ -5,10 +5,6 @@ Here we provide the data and code for:  [**Differential privacy in the 2020 Cens
 
 ### Citation
 
-
-> Hauer, M.E. & Santos-Lozada, A.R. *Great Journal* (DOI Forthcoming) (YEAR ACCESSED).
-
-
 # Abstract
 > Scientists and policy makers rely on accurate population and mortality data to inform efforts regarding the coronavirus disease 2019 (COVID-19) pandemic, with age-specific mortality rates of high importance due to the concentration of COVID-19 deaths at older ages. Population counts – the principal denominators for calculating age-specific mortality rates – will be subject to noise injection in the United States with the 2020 Census via differential privacy. Using COVID-19 mortality curves from Italy, we show that differential privacy will introduce significant distortion in COVID-19 mortality rates – sometimes causing mortality rates to exceed 100% -- hindering our ability to understand the pandemic. This distortion is particularly large for population groupings with fewer than 1000 persons – 40% of all county-level age-sex groupings and 60% of race groupings. The US Census Bureau should consider a larger privacy budget and data users should consider pooling data to increase population sizes to minimize differential privacy’s distortion.
 
