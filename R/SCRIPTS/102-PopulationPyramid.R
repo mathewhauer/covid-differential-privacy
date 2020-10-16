@@ -44,7 +44,7 @@ poppyramids<- proj_sexage1[which(proj_sexage1$fips %in% c("01001","48317", "5001
          sf3 = ifelse(sex=="Male", -1*sf3, sf3),
          dp3 = ifelse(sex=="Male", -1*dp3, dp3)) %>%
   left_join(., fipslist) %>%
-  mutate(County = paste0(name_dp,", ", state)) %>%
+  mutate(County = paste0(name,", ", state)) %>%
   I()
 
 pyramids <- ggplot(poppyramids,aes(x= AGE2)) +

@@ -18,3 +18,11 @@ fig2 <- ggplot(data = dprace, aes(sf, abs(ratio_rates)*100)) +
 
 fig2
 # ggsave("./MANUSCRIPT/FIGURES/fig-race.png", fig2, width = 11, height = 7)
+
+fig3 <- plot_grid(fig1, fig2, ncol=2, labels = "auto")
+# fig3
+# ggsave("./MANUSCRIPT/FIGURES/fig-all.pdf", fig3, width = 11, height = 4)
+# ggsave("./MANUSCRIPT/FIGURES/fig-all.png", fig3, width = 11, height = 4)
+
+# fig3 <- plot_grid(fig1, fig2, ncol=1, labels = "auto")
+# ggsave("./MANUSCRIPT/FIGURES/fig-all-stacked.png", fig3, height=9, width = 7)

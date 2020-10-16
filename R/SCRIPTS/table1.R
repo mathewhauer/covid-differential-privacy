@@ -52,7 +52,9 @@ table_race <- race %>%
     percentage = n / nrow(d2),
   )
 
-table_age
-table_race
-
-
+# table_age
+# table_race
+# table_age$var <- "Age"
+# table_race$var <- "Race"
+# 
+# table <- rbind(table_age, table_race)
